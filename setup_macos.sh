@@ -50,28 +50,6 @@ else
     echo "  FFmpeg: OK ($(ffmpeg -version 2>&1 | head -1))"
 fi
 
-# LLVM (required to build llvmlite, a dependency of gfpgan -> basicsr -> numba)
-if ! brew list llvm &> /dev/null; then
-    echo "  Installing LLVM (needed for llvmlite)..."
-    brew install llvm
-else
-    echo "  LLVM: OK"
-fi
-
-# Set LLVM paths for llvmlite compilation
-LLVM_PREFIX="$(brew --prefix llvm)"
-export LLVM_CONFIG="$LLVM_PREFIX/bin/llvm-config"
-export CMAKE_PREFIX_PATH="$LLVM_PREFIX"
-echo "  LLVM_CONFIG=$LLVM_CONFIG"
-
-# cmake (required for building native extensions)
-if ! command -v cmake &> /dev/null; then
-    echo "  Installing cmake..."
-    brew install cmake
-else
-    echo "  cmake: OK"
-fi
-
 # Python (if not present or too old)
 PYTHON_CMD=""
 if command -v python3 &> /dev/null; then
@@ -168,12 +146,12 @@ echo ""
 echo "  Installing InsightFace..."
 pip install insightface==0.7.3
 
-# Install GFPGAN (needs llvmlite -> LLVM)
+# Install GFPGAN
+# Pin llvmlite/numba to versions with pre-built macOS wheels
+# (avoids needing LLVM installed to compile from source)
 echo ""
 echo "  Installing GFPGAN..."
-export LLVM_CONFIG="$(brew --prefix llvm)/bin/llvm-config"
-export CMAKE_PREFIX_PATH="$(brew --prefix llvm)"
-pip install llvmlite
+pip install --only-binary=:all: llvmlite==0.43.0 numba==0.60.0
 pip install gfpgan==1.3.8
 
 # Install NSFW filter
